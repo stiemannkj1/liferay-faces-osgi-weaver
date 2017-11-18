@@ -181,8 +181,7 @@
 						<![CDATA[
 							# Consult individual package-info.java files to determine Export-Packages and versions.
 							-exportcontents: ${packages;VERSIONED}
-							Import-Package: javax.faces.context;version="[2.2.0,2.3.0)";resolution:=optional,*
-							Bundle-Activator: com.liferay.faces.osgi.ThinWabActivator
+							Bundle-Activator: com.liferay.faces.osgi.weaver.ThinWabActivator
 						]]>
 					</bnd>
 				</configuration>
@@ -284,31 +283,6 @@
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>5.0.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.liferay.portal</groupId>
-			<artifactId>com.liferay.portal.kernel</artifactId>
-			<version>2.3.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.el</groupId>
-			<artifactId>javax.el-api</artifactId>
-			<version>2.2.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.faces</groupId>
-			<artifactId>javax.faces-api</artifactId>
-			<version>${faces.api.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>3.0.1</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

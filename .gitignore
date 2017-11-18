@@ -1,0 +1,14 @@
+.classpath
+.idea
+.project
+.settings
+faces-config.pageflow
+issues/lsv
+navigation-rule.NavData
+nb-configuration.xml
+rebel.xml
+target
+*.sh
+*.iml
+*.ipr
+*.iws

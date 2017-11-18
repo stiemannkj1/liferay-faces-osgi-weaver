@@ -13,8 +13,10 @@
  */
 package com.liferay.faces.osgi.weaver;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 
@@ -30,26 +32,27 @@ public class ThinWabActivator implements BundleActivator {
 	private ServiceRegistration weavingHookService;
 //  private BundleTracker bundleTracker;
 
+	public static boolean isCurrentBundleThickWab() {
+
+		Bundle bundle = FrameworkUtil.getBundle(ThinWabActivator.class);
+
+		return JSF_OSGiWeavingHook.isWab(bundle);
+	}
+
 	@Override
 	public synchronized void start(BundleContext context) throws Exception {
 
-		if (!FacesBundleUtil.isCurrentBundleThickWab()) {
-
-			WeavingHook wh = new JSF_OSGiWeavingHook(context);
-			weavingHookService = context.registerService(WeavingHook.class.getName(), wh, null);
-//          TODO consider alerting bundles that depend on us that they should shut down when we shut down.
-//          bundleTracker = new BundleTracker(context,
-//                  Bundle.INSTALLED | Bundle.RESOLVED | Bundle.STARTING | Bundle.ACTIVE, null);
-//          bundleTracker.open();
-		}
+		weavingHookService = context.registerService(WeavingHook.class.getName(), new JSF_OSGiWeavingHook(), null);
+//      TODO consider alerting bundles that depend on us that they should shut down when we shut down.
+//      bundleTracker = new BundleTracker(context,
+//          Bundle.INSTALLED | Bundle.RESOLVED | Bundle.STARTING | Bundle.ACTIVE, null);
+//      bundleTracker.open();
 	}
 
 	@Override
 	public synchronized void stop(BundleContext context) throws Exception {
 
-		if (!FacesBundleUtil.isCurrentBundleThickWab()) {
-//          bundleTracker.close();
-			weavingHookService.unregister();
-		}
+//      bundleTracker.close();
+		weavingHookService.unregister();
 	}
 }
