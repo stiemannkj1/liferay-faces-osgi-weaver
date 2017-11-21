@@ -13,7 +13,10 @@
  */
 package com.liferay.faces.osgi.weaver.internal;
 
+import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -93,10 +96,17 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		ClassLoader bundleClassLoader = bundleWiring.getClassLoader();
 		ClassWriter classWriter = new OSGiFriendlyClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES,
 				bundleClassLoader);
-		OSGiClassProviderVisitor osgiClassProvider = new OSGiClassProviderVisitor(classWriter);
-		classReader.accept(osgiClassProvider, ClassReader.SKIP_FRAMES);
+		OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter, className);
+		classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
 
-		if (osgiClassProvider.isClassModified()) {
+		if (osgiClassProviderVisitor.isClassModified()) {
+
+			try {
+				Files.write(new File("/home/kylestiemann/Temp/temp.class").toPath(), classWriter.toByteArray(),
+					StandardOpenOption.WRITE);
+			}
+			catch (Throwable t) {
+			}
 
 			wovenClass.setBytes(classWriter.toByteArray());
 
