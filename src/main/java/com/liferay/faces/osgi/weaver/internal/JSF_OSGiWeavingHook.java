@@ -13,10 +13,7 @@
  */
 package com.liferay.faces.osgi.weaver.internal;
 
-import java.io.File;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -80,7 +77,7 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		String bundleSymbolicName = bundle.getSymbolicName();
 
 		if (className.startsWith("com.liferay.faces.osgi") ||
-				className.startsWith("com.liferay.faces.bridge.ext.mojarra") ||
+				className.startsWith("com.liferay.faces.bridge.ext.mojarra.spi") ||
 				(!HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName) && !isFacesWab(bundle))) {
 			return;
 		}
@@ -100,13 +97,6 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
 
 		if (osgiClassProviderVisitor.isClassModified()) {
-
-			try {
-				Files.write(new File("/home/kylestiemann/Temp/temp.class").toPath(), classWriter.toByteArray(),
-					StandardOpenOption.WRITE);
-			}
-			catch (Throwable t) {
-			}
 
 			wovenClass.setBytes(classWriter.toByteArray());
 

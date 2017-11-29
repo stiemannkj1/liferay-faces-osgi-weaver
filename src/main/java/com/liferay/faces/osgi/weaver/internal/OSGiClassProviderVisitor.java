@@ -16,7 +16,6 @@ package com.liferay.faces.osgi.weaver.internal;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 
 /**
@@ -25,7 +24,7 @@ import org.objectweb.asm.Type;
 /* package-private */ class OSGiClassProviderVisitor extends ClassVisitor {
 
 	// Private Final Data Members
-	private final Type classType;
+	private final String currentClassName;
 
 	// Private Data Members
 	private boolean classModified;
@@ -33,9 +32,7 @@ import org.objectweb.asm.Type;
 	/* package-private */ OSGiClassProviderVisitor(ClassVisitor cv, String className) {
 
 		super(Opcodes.ASM5, cv);
-
-		String typeString = OSGiClassProviderMethodVisitor.getTypeString(className);
-		this.classType = Type.getObjectType(typeString);
+		this.currentClassName = className;
 	}
 
 	@Override
@@ -45,8 +42,8 @@ import org.objectweb.asm.Type;
 				access, name, desc);
 	}
 
-	/* package-private */ Type getClassType() {
-		return classType;
+	/* package-private */ String getCurrentClassName() {
+		return currentClassName;
 	}
 
 	/* package-private */ boolean isClassModified() {
