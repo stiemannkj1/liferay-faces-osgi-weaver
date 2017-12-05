@@ -80,12 +80,24 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		return majorVersion >= JAVA_1_6_MAJOR_VERSION;
 	}
 
+	private static boolean isFacesBundle(Bundle bundle) {
+
+		String bundleSymbolicName = bundle.getSymbolicName();
+
+		return HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName) || isFacesWab(bundle);
+	}
+
 	private static boolean isFacesWab(Bundle bundle) {
 
 		Dictionary<String, String> headers = bundle.getHeaders();
 		String importPackageHeader = headers.get("Import-Package");
 
 		return isWab(bundle) && importPackageHeader.contains("javax.faces");
+	}
+
+	private static boolean isLiferayFacesOSGiClass(String className) {
+		return className.startsWith("com.liferay.faces.osgi") ||
+			className.startsWith("com.liferay.faces.bridge.ext.mojarra.spi");
 	}
 
 	private static boolean isWab(Bundle bundle) {
@@ -102,34 +114,32 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		String className = wovenClass.getClassName();
 		BundleWiring bundleWiring = wovenClass.getBundleWiring();
 		Bundle bundle = bundleWiring.getBundle();
-		String bundleSymbolicName = bundle.getSymbolicName();
 
-		if (className.startsWith("com.liferay.faces.osgi") ||
-				className.startsWith("com.liferay.faces.bridge.ext.mojarra.spi") ||
-				(!HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName) && !isFacesWab(bundle))) {
-			return;
-		}
+		// Don't weave Liferay Faces OSGi classes becuase they are already designed to be used in an OSGi environement
+		// with OSGi's limited class loaders.
+		if (!isLiferayFacesOSGiClass(className) && isFacesBundle(bundle)) {
 
-		byte[] bytes = wovenClass.getBytes();
+			byte[] bytes = wovenClass.getBytes();
 
-		// ASM cannot handle classes compiled with Java 1.5 or lower.
-		if (!isCompiledWithJava_1_6_OrGreater(bytes)) {
-			return;
-		}
+			// ASM cannot handle classes compiled with Java 1.5 or lower.
+			if (isCompiledWithJava_1_6_OrGreater(bytes)) {
 
-		ClassReader classReader = new ClassReader(bytes);
-		ClassLoader bundleClassLoader = bundleWiring.getClassLoader();
-		ClassWriter classWriter = new OSGiFriendlyClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES,
-				bundleClassLoader);
-		OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter, className);
-		classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
+				ClassReader classReader = new ClassReader(bytes);
+				ClassLoader bundleClassLoader = bundleWiring.getClassLoader();
+				ClassWriter classWriter = new OSGiFriendlyClassWriter(ClassWriter.COMPUTE_MAXS |
+						ClassWriter.COMPUTE_FRAMES, bundleClassLoader);
+				OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter,
+						className);
+				classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
 
-		if (osgiClassProviderVisitor.isClassModified()) {
+				if (osgiClassProviderVisitor.isClassModified()) {
 
-			wovenClass.setBytes(classWriter.toByteArray());
+					wovenClass.setBytes(classWriter.toByteArray());
 
-			List<String> dynamicImports = wovenClass.getDynamicImports();
-			dynamicImports.add(OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT);
+					List<String> dynamicImports = wovenClass.getDynamicImports();
+					dynamicImports.add(OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT);
+				}
+			}
 		}
 	}
 }
