@@ -32,13 +32,6 @@ public class ThinWabActivator implements BundleActivator {
 	private ServiceRegistration weavingHookService;
 //  private BundleTracker bundleTracker;
 
-	public static boolean isCurrentBundleThickWab() {
-
-		Bundle bundle = FrameworkUtil.getBundle(ThinWabActivator.class);
-
-		return JSF_OSGiWeavingHook.isWab(bundle);
-	}
-
 	@Override
 	public synchronized void start(BundleContext context) throws Exception {
 
