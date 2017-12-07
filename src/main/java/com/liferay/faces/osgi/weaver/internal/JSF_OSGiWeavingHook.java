@@ -36,8 +36,9 @@ import org.osgi.framework.wiring.BundleWiring;
 public class JSF_OSGiWeavingHook implements WeavingHook {
 
 	// Private Constants
+	private static final String LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME = "com.liferay.faces.util";
 	private static final List<String> HANDLED_BUNDLE_SYMBOLIC_NAMES = Collections.unmodifiableList(Arrays.asList(
-				"org.glassfish.javax.faces", "com.liferay.faces.util", "com.liferay.faces.bridge.api",
+				"org.glassfish.javax.faces", LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME, "com.liferay.faces.bridge.api",
 				"com.liferay.faces.bridge.impl", "com.liferay.faces.bridge.ext"));
 
 	/**
@@ -48,9 +49,9 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 	private static final short JAVA_1_6_MAJOR_VERSION = 50;
 	private static final int CLASS_MAJOR_VERSION_BYTE_OFFSET = 6;
 	private static final int CLASS_MAJOR_VERSION_BYTE_SIZE = 2;
-	private static final String OSGI_CLASS_PROVIDER_PACKAGE_NAME = "com.liferay.faces.osgi.util";
+	private static final String OSGI_CLASS_PROVIDER_PACKAGE_NAME = "com.liferay.faces.util.osgi";
 	private static final String OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT = OSGI_CLASS_PROVIDER_PACKAGE_NAME +
-		";bundle-symbolic-name=" + OSGI_CLASS_PROVIDER_PACKAGE_NAME;
+		";bundle-symbolic-name=" + LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
 
 	/**
 	 * Returns true if the class was compiled with a Java 1.6 compiler or target compiler version. The first 4 bytes of
@@ -96,8 +97,7 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 	}
 
 	private static boolean isLiferayFacesOSGiClass(String className) {
-		return className.startsWith("com.liferay.faces.osgi") ||
-			className.startsWith("com.liferay.faces.bridge.ext.mojarra.spi");
+		return className.startsWith("com.liferay.faces.util.osgi");
 	}
 
 	private static boolean isWab(Bundle bundle) {

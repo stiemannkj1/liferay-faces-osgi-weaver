@@ -41,7 +41,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 	private static final String OSGI_CLASS_PROVIDER_LOAD_CLASS_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type
 			.getType(Class.class), Type.getType(String.class), FACES_CONTEXT_TYPE, Type.getType(ClassLoader.class));
 	private static final String OSGI_CLASS_PROVIDER_OWNER_STRING = getTypeString(
-			"com.liferay.faces.osgi.util.OSGiClassProviderUtil");
+			"com.liferay.faces.util.osgi.OSGiClassProviderUtil");
 	private static final String CLASS_OWNER_STRING = getTypeString(Class.class);
 	private static final String CLASS_LOADER_OWNER_STRING = getTypeString(ClassLoader.class);
 
