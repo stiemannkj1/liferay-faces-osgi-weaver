@@ -19,8 +19,6 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
 
-import org.apache.aries.spifly.dynamic.OSGiFriendlyClassWriter;
-
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -72,8 +70,8 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		// Example hexadecimal data for a Java class file compiled with a Java 1.7 compiler (or target version):
 
 		//J-
-		// Byte Offset: 0  1  2	 3	4  5  6	 7
-		// Bytes:	   CA FE BA BE 00 00 00 33
+		// Byte Offset: 00 01 02 03 04 05 06 07
+		// Bytes:		CA FE BA BE 00 00 00 33
 		//J+
 		ByteBuffer buffer = ByteBuffer.wrap(classBytes, CLASS_MAJOR_VERSION_BYTE_OFFSET, CLASS_MAJOR_VERSION_BYTE_SIZE);
 		short majorVersion = buffer.getShort();
@@ -125,19 +123,28 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 			if (isCompiledWithJava_1_6_OrGreater(bytes)) {
 
 				ClassReader classReader = new ClassReader(bytes);
-				ClassLoader bundleClassLoader = bundleWiring.getClassLoader();
-				ClassWriter classWriter = new OSGiFriendlyClassWriter(ClassWriter.COMPUTE_MAXS |
-						ClassWriter.COMPUTE_FRAMES, bundleClassLoader);
-				OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter,
-						className);
-				classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
+				ClassWriter classWriter = new OSGiClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES,
+						bundleWiring);
 
-				if (osgiClassProviderVisitor.isClassModified()) {
+				try {
 
-					wovenClass.setBytes(classWriter.toByteArray());
+					OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter,
+							className);
+					classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
 
-					List<String> dynamicImports = wovenClass.getDynamicImports();
-					dynamicImports.add(OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT);
+					if (osgiClassProviderVisitor.isClassModified()) {
+
+						wovenClass.setBytes(classWriter.toByteArray());
+
+						List<String> dynamicImports = wovenClass.getDynamicImports();
+						dynamicImports.add(OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT);
+					}
+				}
+				catch (CommonSuperClassNotFoundException e) {
+
+					// TODO use a logger implementation
+					System.err.println("Skipping weaving of " + className + " due to the following error(s):");
+					System.err.println(e);
 				}
 			}
 		}

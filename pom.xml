@@ -57,7 +57,7 @@
 		<faces.spec.version>2.2</faces.spec.version>
 		<full.version>${project.version} (${timestamp} AD)</full.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<surefire.version>2.12</surefire.version>
+		<surefire.version>2.20.1</surefire.version>
 	</properties>
 
 	<build>
@@ -213,6 +213,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${surefire.version}</version>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -254,23 +255,15 @@
 						</executions>
 					</plugin>
 				</plugins>
-				<resources>
-					<resource>
-						<directory>src/main/resources</directory>
-						<excludes>
-							<exclude>rebel.xml</exclude>
-						</excludes>
-					</resource>
-				</resources>
 			</build>
 		</profile>
 	</profiles>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.aries.spifly</groupId>
-			<artifactId>org.apache.aries.spifly.dynamic.bundle</artifactId>
-			<version>1.0.10</version>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-all</artifactId>
+			<version>5.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -285,16 +278,12 @@
 			<version>5.0.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>2.4.0</version>
-			</plugin>
-		</plugins>
-	</reporting>
 
 </project>

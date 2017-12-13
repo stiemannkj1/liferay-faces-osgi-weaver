@@ -56,12 +56,12 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 		this.osgiClassProviderVisitor = osgiClassProviderVisitor;
 	}
 
-	private static String getTypeString(String className) {
-		return className.replace(".", "/");
+	/* package-private */ static String getTypeString(Class<?> clazz) {
+		return getTypeString(clazz.getName());
 	}
 
-	private static String getTypeString(Class<?> clazz) {
-		return getTypeString(clazz.getName());
+	private static String getTypeString(String className) {
+		return className.replace(".", "/");
 	}
 
 	@Override
