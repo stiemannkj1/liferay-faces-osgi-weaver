@@ -16,6 +16,7 @@ package com.liferay.faces.osgi.weaver.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -31,8 +32,8 @@ import org.osgi.framework.wiring.BundleWiring;
  */
 /* package-private */ class OSGiClassWriter extends ClassWriter {
 
-	// Private Constants
-	private static final String OBJECT_TYPE_STRING = OSGiClassProviderMethodVisitor.getTypeString(Object.class);
+	// Package-Private Constants
+	/* package-private */ static final String OBJECT_TYPE_STRING = OSGiClassProviderMethodVisitor.getTypeString(Object.class);
 
 	// Private Final Data Members
 	private final String bundleSymbolicName;
@@ -68,16 +69,31 @@ import org.osgi.framework.wiring.BundleWiring;
 		}
 		else {
 
-			Set<String> typeSet1 = getTypeAndAncestors(type1);
-			Set<String> typeSet2 = getTypeAndAncestors(type2);
+			IterableLazyTypeHierarchy typeHierarchy1 = new IterableLazyTypeHierarchy(type1, bundleWiringClassLoader);
+			IterableLazyTypeHierarchy typeHierarchy2 = new IterableLazyTypeHierarchy(type2, bundleWiringClassLoader);
+			Iterator<String> typeHierarchy2Iterator = typeHierarchy2.iterator();
+			LinkedHashSet<String> cachedTypeHierarchy2Values = new LinkedHashSet<String>();
 
-			for (String typeFromTypeSet1 : typeSet1) {
+			for (String typeFromHierarchy1 : typeHierarchy1) {
 
-				if (typeSet2.contains(typeFromTypeSet1)) {
+				if (cachedTypeHierarchy2Values.contains(typeFromHierarchy1)) {
 
-					commonSuperClass = typeFromTypeSet1;
+					commonSuperClass = typeFromHierarchy1;
 
 					break;
+				}
+
+				while (typeHierarchy2Iterator.hasNext()) {
+
+					String typeFromHierarchy2 = typeHierarchy2Iterator.next();
+					cachedTypeHierarchy2Values.add(typeFromHierarchy2);
+
+					if (typeFromHierarchy2.equals(typeFromHierarchy1)) {
+
+						commonSuperClass = typeFromHierarchy1;
+
+						break;
+					}
 				}
 			}
 
@@ -88,51 +104,5 @@ import org.osgi.framework.wiring.BundleWiring;
 		}
 
 		return commonSuperClass;
-	}
-
-	private Set<String> getTypeAndAncestors(String initialType) {
-
-		Set<String> ancestors = new LinkedHashSet<String>();
-		ancestors.add(initialType);
-
-		String type = initialType;
-
-		while (type != null) {
-
-			InputStream inputStream = bundleWiringClassLoader.getResourceAsStream(type + ".class");
-
-			if (inputStream == null) {
-				break;
-			}
-
-			try {
-
-				ClassReader typeClassReader = new ClassReader(inputStream);
-				type = typeClassReader.getSuperName();
-
-				if ((type != null) && !type.equals(OBJECT_TYPE_STRING)) {
-					ancestors.add(type);
-				}
-				else {
-
-					ancestors.add(OBJECT_TYPE_STRING);
-					type = null;
-				}
-			}
-			catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			finally {
-
-				try {
-					inputStream.close();
-				}
-				catch (IOException e) {
-					// do nothing.
-				}
-			}
-		}
-
-		return Collections.unmodifiableSet(ancestors);
 	}
 }
