@@ -21,7 +21,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * @author  Kyle Stiemann
  */
-/* package-private */ class OSGiClassProviderVisitor extends ClassVisitor {
+/* package-private */ class JSF_OSGiClassVisitor extends ClassVisitor {
 
 	// Private Final Data Members
 	private final String currentClassName;
@@ -29,7 +29,7 @@ import org.objectweb.asm.Opcodes;
 	// Private Data Members
 	private boolean classModified;
 
-	/* package-private */ OSGiClassProviderVisitor(ClassVisitor cv, String className) {
+	/* package-private */ JSF_OSGiClassVisitor(ClassVisitor cv, String className) {
 
 		super(Opcodes.ASM5, cv);
 		this.currentClassName = className;
@@ -38,8 +38,8 @@ import org.objectweb.asm.Opcodes;
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 
-		return new OSGiClassProviderMethodVisitor(this, super.visitMethod(access, name, desc, signature, exceptions),
-				access, name, desc);
+		return new JSF_OSGiMethodVisitor(this, super.visitMethod(access, name, desc, signature, exceptions), access,
+				name, desc);
 	}
 
 	/* package-private */ String getCurrentClassName() {

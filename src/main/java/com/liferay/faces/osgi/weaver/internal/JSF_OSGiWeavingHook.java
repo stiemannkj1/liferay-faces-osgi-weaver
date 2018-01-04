@@ -27,6 +27,10 @@ import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.wiring.BundleWiring;
 
+import org.osgi.service.log.LogService;
+
+import org.osgi.util.tracker.ServiceTracker;
+
 
 /**
  * @author  Kyle Stiemann
@@ -47,9 +51,16 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 	private static final short JAVA_1_6_MAJOR_VERSION = 50;
 	private static final int CLASS_MAJOR_VERSION_BYTE_OFFSET = 6;
 	private static final int CLASS_MAJOR_VERSION_BYTE_SIZE = 2;
-	private static final String OSGI_CLASS_PROVIDER_PACKAGE_NAME = "com.liferay.faces.util.osgi";
-	private static final String OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT = OSGI_CLASS_PROVIDER_PACKAGE_NAME +
+	private static final String OSGI_CLASS_LOADER_PACKAGE_NAME = "com.liferay.faces.util.osgi";
+	private static final String OSGI_CLASS_LOADER_DYNAMIC_IMPORT = OSGI_CLASS_LOADER_PACKAGE_NAME +
 		";bundle-symbolic-name=" + LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
+
+	// Private Data Members
+	private ServiceTracker<LogService, LogService> logServiceTracker;
+
+	public JSF_OSGiWeavingHook(ServiceTracker<LogService, LogService> logServiceTracker) {
+		this.logServiceTracker = logServiceTracker;
+	}
 
 	/**
 	 * Returns true if the class was compiled with a Java 1.6 compiler or target compiler version. The first 4 bytes of
@@ -98,6 +109,10 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		return className.startsWith("com.liferay.faces.util.osgi");
 	}
 
+	private static boolean isMojarraSPIClass(String className) {
+		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config");
+	}
+
 	private static boolean isWab(Bundle bundle) {
 
 		Dictionary<String, String> headers = bundle.getHeaders();
@@ -115,7 +130,7 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 
 		// Don't weave Liferay Faces OSGi classes becuase they are already designed to be used in an OSGi environement
 		// with OSGi's limited class loaders.
-		if (!isLiferayFacesOSGiClass(className) && isFacesBundle(bundle)) {
+		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClass(className) && isFacesBundle(bundle)) {
 
 			byte[] bytes = wovenClass.getBytes();
 
@@ -128,23 +143,22 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 
 				try {
 
-					OSGiClassProviderVisitor osgiClassProviderVisitor = new OSGiClassProviderVisitor(classWriter,
-							className);
-					classReader.accept(osgiClassProviderVisitor, ClassReader.SKIP_FRAMES);
+					JSF_OSGiClassVisitor osgiClassLoaderVisitor = new JSF_OSGiClassVisitor(classWriter, className);
+					classReader.accept(osgiClassLoaderVisitor, ClassReader.SKIP_FRAMES);
 
-					if (osgiClassProviderVisitor.isClassModified()) {
+					if (osgiClassLoaderVisitor.isClassModified()) {
 
 						wovenClass.setBytes(classWriter.toByteArray());
 
 						List<String> dynamicImports = wovenClass.getDynamicImports();
-						dynamicImports.add(OSGI_CLASS_PROVIDER_DYNAMIC_IMPORT);
+						dynamicImports.add(OSGI_CLASS_LOADER_DYNAMIC_IMPORT);
 					}
 				}
 				catch (CommonSuperClassNotFoundException e) {
 
-					// TODO use a logger implementation
-					System.err.println("Skipping weaving of " + className + " due to the following error(s):");
-					System.err.println(e);
+					LogService logService = logServiceTracker.getService();
+					logService.log(LogService.LOG_WARNING,
+						"Skipping weaving of " + className + " due to the following error(s):", e);
 				}
 			}
 		}

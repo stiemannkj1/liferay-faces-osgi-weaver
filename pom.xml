@@ -182,6 +182,10 @@
 							# Consult individual package-info.java files to determine Export-Packages and versions.
 							-exportcontents: ${packages;VERSIONED}
 							Bundle-Activator: com.liferay.faces.osgi.weaver.ThinWabActivator
+							Import-Package: \
+								!com.liferay.osgi.weaver,\
+								!com.liferay.osgi.weaver.*,\
+								*
 						]]>
 					</bnd>
 				</configuration>
@@ -276,6 +280,18 @@
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>5.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.component.annotations</artifactId>
+			<version>1.3.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.log</artifactId>
+			<version>1.3.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

@@ -21,7 +21,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
 
-import static com.liferay.faces.osgi.weaver.internal.OSGiClassProviderMethodVisitor.getTypeString;
+import static com.liferay.faces.osgi.weaver.internal.JSF_OSGiMethodVisitor.getTypeString;
 
 
 /**
@@ -54,7 +54,7 @@ public class TestOSGiClassWriter {
 				OSGI_CLASS_WRITER_TYPE_STRING);
 		Assert.assertEquals(OSGI_CLASS_WRITER_TYPE_STRING, actualCommonSuperClass);
 
-		// Test obtaining common parent.
+		// Test obtaining common ancestor.
 		actualCommonSuperClass = osgiClassWriter.getCommonSuperClass(OSGI_CLASS_WRITER_TYPE_STRING,
 				CLASS_WRITER_TYPE_STRING);
 		Assert.assertEquals(CLASS_WRITER_TYPE_STRING, actualCommonSuperClass);

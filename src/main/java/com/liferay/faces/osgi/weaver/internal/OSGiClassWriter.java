@@ -13,14 +13,9 @@
  */
 package com.liferay.faces.osgi.weaver.internal;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import org.osgi.framework.Bundle;
@@ -33,7 +28,7 @@ import org.osgi.framework.wiring.BundleWiring;
 /* package-private */ class OSGiClassWriter extends ClassWriter {
 
 	// Package-Private Constants
-	/* package-private */ static final String OBJECT_TYPE_STRING = OSGiClassProviderMethodVisitor.getTypeString(Object.class);
+	/* package-private */ static final String OBJECT_TYPE_STRING = JSF_OSGiMethodVisitor.getTypeString(Object.class);
 
 	// Private Final Data Members
 	private final String bundleSymbolicName;
