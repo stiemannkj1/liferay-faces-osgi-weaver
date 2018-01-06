@@ -110,7 +110,7 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 	}
 
 	private static boolean isMojarraSPIClass(String className) {
-		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config");
+		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config.configprovider");
 	}
 
 	private static boolean isWab(Bundle bundle) {
