@@ -13,11 +13,14 @@
  */
 package com.liferay.faces.osgi.weaver;
 
-import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.log.LogService;
 
 import org.osgi.util.tracker.ServiceTracker;
@@ -28,28 +31,30 @@ import com.liferay.faces.osgi.weaver.internal.JSF_OSGiWeavingHook;
 /**
  * @author  Kyle Stiemann
  */
-public class ThinWabActivator implements BundleActivator {
+@Component(immediate = true)
+public class ThinWabActivator {
 
 	// Private Data Members
 	private ServiceTracker<LogService, LogService> logServiceTracker;
 	private ServiceRegistration weavingHookService;
 //  private BundleTracker bundleTracker;
 
-	@Override
-	public synchronized void start(BundleContext bundleContext) throws Exception {
+	@Reference
+	private LogService logService;
 
-		logServiceTracker = new ServiceTracker<LogService, LogService>(bundleContext, LogService.class, null);
-		logServiceTracker.open();
-		weavingHookService = bundleContext.registerService(WeavingHook.class,
-				new JSF_OSGiWeavingHook(logServiceTracker), null);
+	@Activate
+	protected synchronized void start(BundleContext bundleContext) throws Exception {
+
+		weavingHookService = bundleContext.registerService(WeavingHook.class, new JSF_OSGiWeavingHook(logService),
+				null);
 //      TODO consider alerting bundles that depend on us that they should shut down when we shut down.
 //      bundleTracker = new BundleTracker(context,
 //          Bundle.INSTALLED | Bundle.RESOLVED | Bundle.STARTING | Bundle.ACTIVE, null);
 //      bundleTracker.open();
 	}
 
-	@Override
-	public synchronized void stop(BundleContext context) throws Exception {
+	@Deactivate
+	protected synchronized void stop(BundleContext context) throws Exception {
 
 //      bundleTracker.close();
 		weavingHookService.unregister();

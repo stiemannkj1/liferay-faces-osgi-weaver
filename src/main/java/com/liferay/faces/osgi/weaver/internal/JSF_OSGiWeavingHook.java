@@ -56,10 +56,10 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		";bundle-symbolic-name=" + LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
 
 	// Private Data Members
-	private ServiceTracker<LogService, LogService> logServiceTracker;
+	private LogService logService;
 
-	public JSF_OSGiWeavingHook(ServiceTracker<LogService, LogService> logServiceTracker) {
-		this.logServiceTracker = logServiceTracker;
+	public JSF_OSGiWeavingHook(LogService logService) {
+		this.logService = logService;
 	}
 
 	/**
@@ -155,10 +155,10 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 					}
 				}
 				catch (CommonSuperClassNotFoundException e) {
-
-					LogService logService = logServiceTracker.getService();
 					logService.log(LogService.LOG_WARNING,
-						"Skipping weaving of " + className + " due to the following error(s):", e);
+						"Unable to weave " + className +
+						" for use with OSGi. Unexpected class loading errors may occur when using this class. Weaving failed due to the following error(s):",
+						e);
 				}
 			}
 		}

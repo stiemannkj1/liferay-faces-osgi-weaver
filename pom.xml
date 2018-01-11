@@ -181,7 +181,6 @@
 						<![CDATA[
 							# Consult individual package-info.java files to determine Export-Packages and versions.
 							-exportcontents: ${packages;VERSIONED}
-							Bundle-Activator: com.liferay.faces.osgi.weaver.ThinWabActivator
 							Import-Package: \
 								!com.liferay.osgi.weaver,\
 								!com.liferay.osgi.weaver.*,\
