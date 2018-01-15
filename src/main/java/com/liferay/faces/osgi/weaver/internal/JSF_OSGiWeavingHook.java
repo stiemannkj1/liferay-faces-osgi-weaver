@@ -26,15 +26,17 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import org.osgi.service.log.LogService;
 
-import org.osgi.util.tracker.ServiceTracker;
 
 
 /**
  * @author  Kyle Stiemann
  */
+@Component(immediate = true, service = WeavingHook.class)
 public class JSF_OSGiWeavingHook implements WeavingHook {
 
 	// Private Constants
@@ -56,11 +58,8 @@ public class JSF_OSGiWeavingHook implements WeavingHook {
 		";bundle-symbolic-name=" + LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
 
 	// Private Data Members
+	@Reference
 	private LogService logService;
-
-	public JSF_OSGiWeavingHook(LogService logService) {
-		this.logService = logService;
-	}
 
 	/**
 	 * Returns true if the class was compiled with a Java 1.6 compiler or target compiler version. The first 4 bytes of
