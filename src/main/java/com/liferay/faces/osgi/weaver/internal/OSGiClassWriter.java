@@ -25,7 +25,7 @@ import org.osgi.framework.wiring.BundleWiring;
 /**
  * @author  Kyle Stiemann
  */
-/* package-private */ class OSGiClassWriter extends ClassWriter {
+/* package-private */ final class OSGiClassWriter extends ClassWriter {
 
 	// Package-Private Constants
 	/* package-private */ static final String OBJECT_TYPE_STRING = JSF_OSGiMethodVisitor.getTypeString(Object.class);

@@ -26,7 +26,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 /**
  * @author  Kyle Stiemann
  */
-/* package-private */ class JSF_OSGiMethodVisitor extends GeneratorAdapter {
+/* package-private */ final class JSF_OSGiMethodVisitor extends GeneratorAdapter {
 
 	// Private Constants
 	private static final String CLASS_FOR_NAME_1_ARG_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(

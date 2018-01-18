@@ -16,7 +16,7 @@ package com.liferay.faces.osgi.weaver.internal;
 /**
  * @author  Kyle Stiemann
  */
-public class CommonSuperClassNotFoundException extends RuntimeException {
+/* package-private */ final class CommonSuperClassNotFoundException extends RuntimeException {
 
 	// serialVersionUID
 	private static final long serialVersionUID = 5360305088729931793L;

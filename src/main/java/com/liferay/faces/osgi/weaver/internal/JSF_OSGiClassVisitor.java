@@ -21,7 +21,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * @author  Kyle Stiemann
  */
-/* package-private */ class JSF_OSGiClassVisitor extends ClassVisitor {
+/* package-private */ final class JSF_OSGiClassVisitor extends ClassVisitor {
 
 	// Private Final Data Members
 	private final String currentClassName;

@@ -26,7 +26,7 @@ import org.objectweb.asm.ClassReader;
  *
  * @author  Kyle Stiemann
  */
-/* package-private */ class IterableLazyTypeHierarchy implements Iterable<String> {
+/* package-private */ final class IterableLazyTypeHierarchy implements Iterable<String> {
 
 	// Private Final Data Members
 	private final String initialClassType;
