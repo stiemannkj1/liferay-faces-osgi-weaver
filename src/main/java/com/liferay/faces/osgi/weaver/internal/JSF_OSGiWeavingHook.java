@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -157,10 +157,12 @@ import org.osgi.service.log.LogService;
 					}
 				}
 				catch (CommonSuperClassNotFoundException e) {
+
 					logService.log(LogService.LOG_WARNING,
 						"Unable to weave " + className +
-						" for use with OSGi. Unexpected class loading errors may occur when using this class. Weaving failed due to the following error(s):",
-						e);
+						" for use with OSGi. Unexpected class loading errors may occur when using this class.");
+					logService.log(LogService.LOG_DEBUG,
+						"Unable to weave " + className + " due to the following error(s):", e);
 				}
 			}
 		}
