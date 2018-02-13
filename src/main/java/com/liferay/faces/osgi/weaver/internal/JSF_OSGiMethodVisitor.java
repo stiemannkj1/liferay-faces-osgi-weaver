@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.faces.osgi.weaver.internal;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.ResourceBundle;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -61,6 +62,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			Type.getType(ClassLoader.class));
 	private static final String REPLACEMENT_LOAD_CLASS_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(
 				Class.class), Type.getType(String.class), FACES_CONTEXT_TYPE, Type.getType(ClassLoader.class));
+	private static final String RESOURCE_BUNDLE_OWNER_STRING = getTypeString(ResourceBundle.class);
 
 	// Private Final Data Members
 	private final boolean visitingStaticMethod;
@@ -300,6 +302,13 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			else {
 				super.visitMethodInsn(opcode, owner, name, methodDescriptor, itf);
 			}
+		}
+		else if ((opcode == Opcodes.INVOKESTATIC) && owner.equals(RESOURCE_BUNDLE_OWNER_STRING) &&
+				name.equals("getBundle")) {
+
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, OSGI_CLASS_LOADER_UTIL_OWNER_STRING, "getResourceBundle",
+				methodDescriptor, false);
+			osgiClassLoaderVisitor.setClassModified(true);
 		}
 		else {
 			super.visitMethodInsn(opcode, owner, name, methodDescriptor, itf);
