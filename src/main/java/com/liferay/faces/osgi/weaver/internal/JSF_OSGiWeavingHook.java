@@ -145,10 +145,10 @@ import org.osgi.service.log.LogService;
 
 				try {
 
-					JSF_OSGiClassVisitor osgiClassLoaderVisitor = new JSF_OSGiClassVisitor(classWriter, className);
-					classReader.accept(osgiClassLoaderVisitor, ClassReader.SKIP_FRAMES);
+					JSF_OSGiClassVisitor jsfOSGiClassVisitor = new JSF_OSGiClassVisitor(classWriter, className);
+					classReader.accept(jsfOSGiClassVisitor, ClassReader.SKIP_FRAMES);
 
-					if (osgiClassLoaderVisitor.isClassModified()) {
+					if (jsfOSGiClassVisitor.isClassModified()) {
 
 						wovenClass.setBytes(classWriter.toByteArray());
 
