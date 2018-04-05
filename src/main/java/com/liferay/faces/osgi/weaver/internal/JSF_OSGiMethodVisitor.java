@@ -15,7 +15,10 @@ package com.liferay.faces.osgi.weaver.internal;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -36,6 +39,12 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			Type.getType(String.class), Type.BOOLEAN_TYPE, Type.getType(ClassLoader.class));
 	private static final String CLASS_LOADER_OWNER_STRING = getTypeString(ClassLoader.class);
 	private static final String CLASS_OWNER_STRING = getTypeString(Class.class);
+	private static final String GET_BUNDLE_3_ARG_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(
+				ResourceBundle.class), Type.getType(String.class), Type.getType(Locale.class),
+			Type.getType(ClassLoader.class));
+	private static final String GET_BUNDLE_4_ARG_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(
+				ResourceBundle.class), Type.getType(String.class), Type.getType(Locale.class),
+			Type.getType(ClassLoader.class), Type.getType(ResourceBundle.Control.class));
 	private static final String GET_RESOURCES_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(
 				Enumeration.class), Type.getType(String.class));
 	private static final String GET_RESOURCE_AS_STREAM_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.getType(
@@ -62,6 +71,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			Type.getType(ClassLoader.class));
 	private static final String REPLACEMENT_LOAD_CLASS_METHOD_DESCRIPTOR = Type.getMethodDescriptor(CLASS_TYPE,
 			Type.getType(String.class), FACES_CONTEXT_TYPE, Type.getType(ClassLoader.class));
+	private static final String RESOURCE_BUNDLE_OWNER_STRING = getTypeString(ResourceBundle.class);
 
 	// Private Final Data Members
 	private final String currentClassType;
@@ -84,6 +94,21 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 	private static String getTypeString(String className) {
 		return className.replace(".", "/");
+	}
+
+	/**
+	 * Converts a {@link java.util.ResourceBundle}<code>.getBundle()</code> method descriptor into a
+	 * com.liferay.faces.util.osgi.OSGiClassLoaderUtil.getResourceBundle() method descriptor by adding an argument of
+	 * type {@link Class} to the list of argument types.
+	 */
+	private static String toGetResourceBundleMethodDescriptor(String getBundleMethodDescriptor) {
+
+		Type returnType = Type.getReturnType(getBundleMethodDescriptor);
+		Type[] argumentTypes = Type.getArgumentTypes(getBundleMethodDescriptor);
+		argumentTypes = Arrays.copyOf(argumentTypes, argumentTypes.length + 1);
+		argumentTypes[argumentTypes.length - 1] = CLASS_TYPE;
+
+		return Type.getMethodDescriptor(returnType, argumentTypes);
 	}
 
 	@Override
@@ -288,6 +313,20 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			else {
 				super.visitMethodInsn(opcode, owner, name, methodDescriptor, itf);
 			}
+		}
+		else if ((opcode == Opcodes.INVOKESTATIC) && owner.equals(RESOURCE_BUNDLE_OWNER_STRING) &&
+				name.equals("getBundle") &&
+				(methodDescriptor.equals(GET_BUNDLE_3_ARG_METHOD_DESCRIPTOR) ||
+					methodDescriptor.equals(GET_BUNDLE_4_ARG_METHOD_DESCRIPTOR))) {
+
+			loadCurrentClass();
+
+			// Call OSGiClassLoaderUtil.getResourceBundle() with the same arguments as ResourceBundle.getBundle(), but
+			// additionally pass the calling class.
+			String getResourceBundleMethodDescriptor = toGetResourceBundleMethodDescriptor(methodDescriptor);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, OSGI_CLASS_LOADER_UTIL_OWNER_STRING, "getResourceBundle",
+				getResourceBundleMethodDescriptor, false);
+			osgiClassLoaderVisitor.setClassModified(true);
 		}
 		else {
 			super.visitMethodInsn(opcode, owner, name, methodDescriptor, itf);
