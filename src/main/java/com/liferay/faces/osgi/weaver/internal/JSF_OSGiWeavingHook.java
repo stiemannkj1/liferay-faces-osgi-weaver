@@ -14,9 +14,6 @@
 package com.liferay.faces.osgi.weaver.internal;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Dictionary;
 import java.util.List;
 
 import org.objectweb.asm.ClassReader;
@@ -40,10 +37,8 @@ import org.osgi.service.log.LogService;
 /* package-private */ final class JSF_OSGiWeavingHook implements WeavingHook {
 
 	// Private Constants
-	private static final String LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME = "com.liferay.faces.util";
-	private static final List<String> HANDLED_BUNDLE_SYMBOLIC_NAMES = Collections.unmodifiableList(Arrays.asList(
-				"org.glassfish.javax.faces", LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME, "com.liferay.faces.bridge.api",
-				"com.liferay.faces.bridge.impl", "com.liferay.faces.bridge.ext"));
+	private static final int CLASS_MAJOR_VERSION_BYTE_OFFSET = 6;
+	private static final int CLASS_MAJOR_VERSION_BYTE_SIZE = 2;
 
 	/**
 	 * For more details on Java class format/target versions see here: <a
@@ -51,11 +46,9 @@ import org.osgi.service.log.LogService;
 	 * https://blogs.oracle.com/darcy/source%2c-target%2c-class-file-version-decoder-ring</a>
 	 */
 	private static final short JAVA_1_6_MAJOR_VERSION = 50;
-	private static final int CLASS_MAJOR_VERSION_BYTE_OFFSET = 6;
-	private static final int CLASS_MAJOR_VERSION_BYTE_SIZE = 2;
 	private static final String OSGI_CLASS_LOADER_PACKAGE_NAME = "com.liferay.faces.util.osgi";
 	private static final String OSGI_CLASS_LOADER_DYNAMIC_IMPORT = OSGI_CLASS_LOADER_PACKAGE_NAME +
-		";bundle-symbolic-name=" + LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
+		";bundle-symbolic-name=" + JSF_OSGiWeaver.LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
 
 	// Private Data Members
 	private LogService logService;
@@ -92,19 +85,12 @@ import org.osgi.service.log.LogService;
 		return majorVersion >= JAVA_1_6_MAJOR_VERSION;
 	}
 
-	private static boolean isFacesBundle(Bundle bundle) {
+	private static boolean isHandledBundle(BundleWiring bundleWiring) {
 
+		Bundle bundle = bundleWiring.getBundle();
 		String bundleSymbolicName = bundle.getSymbolicName();
 
-		return HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName) || isFacesWab(bundle);
-	}
-
-	private static boolean isFacesWab(Bundle bundle) {
-
-		Dictionary<String, String> headers = bundle.getHeaders();
-		String importPackageHeader = headers.get("Import-Package");
-
-		return isWab(bundle) && importPackageHeader.contains("javax.faces");
+		return JSF_OSGiWeaver.HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName);
 	}
 
 	private static boolean isLiferayFacesOSGiClass(String className) {
@@ -115,24 +101,15 @@ import org.osgi.service.log.LogService;
 		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config.configprovider");
 	}
 
-	private static boolean isWab(Bundle bundle) {
-
-		Dictionary<String, String> headers = bundle.getHeaders();
-		String webContextPathHeader = headers.get("Web-ContextPath");
-
-		return webContextPathHeader != null;
-	}
-
 	@Override
 	public void weave(WovenClass wovenClass) {
 
 		String className = wovenClass.getClassName();
 		BundleWiring bundleWiring = wovenClass.getBundleWiring();
-		Bundle bundle = bundleWiring.getBundle();
 
 		// Don't weave Liferay Faces OSGi classes becuase they are already designed to be used in an OSGi environement
 		// with OSGi's limited class loaders.
-		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClass(className) && isFacesBundle(bundle)) {
+		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClass(className) && isHandledBundle(bundleWiring)) {
 
 			byte[] bytes = wovenClass.getBytes();
 

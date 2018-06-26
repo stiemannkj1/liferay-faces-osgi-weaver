@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -11,26 +11,22 @@
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
  */
-/**
- * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.liferay.faces.osgi.weaver.internal;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Dictionary;
+import java.util.List;
+
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.hooks.weaving.WeavingHook;
+import org.osgi.framework.wiring.FrameworkWiring;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -40,29 +36,130 @@ import org.osgi.service.log.LogService;
 
 
 /**
- * This class exists to work around <a href="https://issues.apache.org/jira/browse/FELIX-5570">FELIX-5570</a>.
+ * This class exists to work around <a href="https://issues.apache.org/jira/browse/FELIX-5570">FELIX-5570</a> and
+ * refresh all Faces bundles to ensure that bytecode weaving occurs even on bundles deployed before the weaver was
+ * activated.
  *
  * @author  Kyle Stiemann
  */
 @Component(immediate = true)
 public final class JSF_OSGiWeaver {
 
-	// Private Data Member
+	//J-
+	// Package-Private Constants
+	/* package-private */ static final String LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME = "com.liferay.faces.util";
+	/* package-private */ static final List<String> HANDLED_BUNDLE_SYMBOLIC_NAMES =
+	Collections.unmodifiableList(Arrays.asList(
+		"org.glassfish.javax.faces",
+		LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME,
+		"com.liferay.faces.bridge.impl",
+		"org.primefaces"
+	));
+	//J+
+
+	// Private Data Members
 	@Reference
 	private LogService logService;
 	private ServiceRegistration weavingHookService;
 
+	private static boolean isFacesWab(Bundle bundle) {
+
+		Dictionary<String, String> headers = bundle.getHeaders();
+		String importPackageHeader = headers.get("Import-Package");
+
+		return isWab(bundle) && (importPackageHeader != null) && importPackageHeader.contains("javax.faces");
+	}
+
+	private static boolean isWab(Bundle bundle) {
+
+		Dictionary<String, String> headers = bundle.getHeaders();
+		String webContextPathHeader = headers.get("Web-ContextPath");
+
+		return webContextPathHeader != null;
+	}
+
+	private static void restartFacesWabs(List<Bundle> facesWabs, LogService logService) {
+
+		for (Bundle facesWab : facesWabs) {
+
+			try {
+				facesWab.start();
+			}
+			catch (BundleException e) {
+				logService.log(LogService.LOG_ERROR,
+					facesWab.getSymbolicName() + " failed to start due to the following error(s):", e);
+			}
+		}
+	}
+
 	@Activate
-	/* package-private */ synchronized void activate(BundleContext bundleContext) throws Exception {
+	/* package-private */ synchronized void activate(BundleContext bundleContext) throws BundleException {
 
 		// Avoid using Declarative Services to register the weaving hook to work around
 		// https://issues.apache.org/jira/browse/FELIX-5570.
 		weavingHookService = bundleContext.registerService(WeavingHook.class, new JSF_OSGiWeavingHook(logService),
 				null);
+
+		// Refresh deployed Faces bundles to ensure that bytecode weaving occurs even on bundles deployed before the
+		// weaver was activated.
+		Bundle systemBundle = bundleContext.getBundle(0);
+		FrameworkWiring frameworkWiring = systemBundle.adapt(FrameworkWiring.class);
+		List<Bundle> facesBundles = new ArrayList<Bundle>();
+		List<Bundle> facesWabs = new ArrayList<Bundle>();
+		Bundle[] bundles = bundleContext.getBundles();
+
+		for (Bundle bundle : bundles) {
+
+			String bundleSymbolicName = bundle.getSymbolicName();
+
+			if (HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName)) {
+				facesBundles.add(bundle);
+			}
+			else if (isFacesWab(bundle)) {
+
+				int facesWabState = bundle.getState();
+
+				if ((facesWabState == Bundle.STARTING) || (facesWabState == Bundle.ACTIVE)) {
+
+					bundle.stop();
+					facesWabs.add(bundle);
+				}
+			}
+		}
+
+		if (!facesBundles.isEmpty()) {
+			frameworkWiring.refreshBundles(facesBundles, new FacesBundlesRefreshListener(facesWabs, logService));
+		}
+		else if (!facesWabs.isEmpty()) {
+			restartFacesWabs(Collections.unmodifiableList(facesWabs), logService);
+		}
 	}
 
 	@Deactivate
-	/* package-private */ synchronized void deactivate(BundleContext bundleContext) throws Exception {
+	/* package-private */ synchronized void deactivate(BundleContext bundleContext) {
 		weavingHookService.unregister();
+	}
+
+	private static final class FacesBundlesRefreshListener implements FrameworkListener {
+
+		// Private Final Data Members
+		private final List<Bundle> facesWabs;
+		private final LogService logService;
+
+		public FacesBundlesRefreshListener(List<Bundle> facesWabs, LogService logService) {
+
+			this.facesWabs = Collections.unmodifiableList(facesWabs);
+			this.logService = logService;
+		}
+
+		@Override
+		public void frameworkEvent(FrameworkEvent frameworkEvent) {
+
+			int eventType = frameworkEvent.getType();
+
+			if (eventType == FrameworkEvent.PACKAGES_REFRESHED) {
+				restartFacesWabs(facesWabs, logService);
+			}
+		}
 	}
 }
