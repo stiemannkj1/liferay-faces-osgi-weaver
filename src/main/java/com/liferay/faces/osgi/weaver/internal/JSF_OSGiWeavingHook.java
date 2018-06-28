@@ -117,17 +117,17 @@ import org.osgi.service.log.LogService;
 			if (isCompiledWithJava_1_6_OrGreater(bytes)) {
 
 				ClassReader classReader = new ClassReader(bytes);
-				ClassWriter classWriter = new OSGiClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES,
-						bundleWiring);
+				OSGiClassWriter osgiClassWriter = new OSGiClassWriter(ClassWriter.COMPUTE_MAXS |
+						ClassWriter.COMPUTE_FRAMES, bundleWiring);
 
 				try {
 
-					JSF_OSGiClassVisitor jsfOSGiClassVisitor = new JSF_OSGiClassVisitor(classWriter, className);
+					JSF_OSGiClassVisitor jsfOSGiClassVisitor = new JSF_OSGiClassVisitor(osgiClassWriter, className);
 					classReader.accept(jsfOSGiClassVisitor, ClassReader.SKIP_FRAMES);
 
 					if (jsfOSGiClassVisitor.isClassModified()) {
 
-						wovenClass.setBytes(classWriter.toByteArray());
+						wovenClass.setBytes(osgiClassWriter.toByteArray());
 
 						List<String> dynamicImports = wovenClass.getDynamicImports();
 						dynamicImports.add(OSGI_CLASS_LOADER_DYNAMIC_IMPORT);

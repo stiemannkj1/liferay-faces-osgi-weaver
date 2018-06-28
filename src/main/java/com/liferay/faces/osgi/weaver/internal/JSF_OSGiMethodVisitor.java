@@ -31,6 +31,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
  */
 /* package-private */ final class JSF_OSGiMethodVisitor extends GeneratorAdapter {
 
+	// Package-Private
+	/* package-private */ static final String FACES_CONTEXT_CLASS_NAME = "javax.faces.context.FacesContext";
+	/* package-private */ static final String FACES_CONTEXT_TYPE_STRING = getTypeString("javax.faces.context.FacesContext");
+
 	// Private Constants
 	private static final Type CLASS_TYPE = Type.getType(Class.class);
 	private static final String CLASS_FOR_NAME_1_ARG_METHOD_DESCRIPTOR = Type.getMethodDescriptor(CLASS_TYPE,
@@ -53,7 +57,6 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 			Type.getType(String.class));
 	private static final String LOAD_CLASS_METHOD_DESCRIPTOR = Type.getMethodDescriptor(CLASS_TYPE,
 			Type.getType(String.class));
-	private static final String FACES_CONTEXT_TYPE_STRING = getTypeString("javax.faces.context.FacesContext");
 	private static final Type FACES_CONTEXT_TYPE = Type.getObjectType(FACES_CONTEXT_TYPE_STRING);
 	private static final String OSGI_CLASS_LOADER_UTIL_OWNER_STRING = getTypeString(
 			"com.liferay.faces.util.osgi.OSGiClassLoaderUtil");
@@ -74,7 +77,6 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 	private static final String RESOURCE_BUNDLE_OWNER_STRING = getTypeString(ResourceBundle.class);
 
 	// Private Final Data Members
-	private final String currentClassType;
 	private final JSF_OSGiClassVisitor osgiClassLoaderVisitor;
 	private final boolean visitingStaticMethod;
 
@@ -83,16 +85,13 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 		super(Opcodes.ASM5, mv, access, name, desc);
 		this.visitingStaticMethod = (access & Opcodes.ACC_STATIC) > 0;
 		this.osgiClassLoaderVisitor = osgiClassLoaderVisitor;
-
-		String currentClassName = osgiClassLoaderVisitor.getCurrentClassName();
-		this.currentClassType = getTypeString(currentClassName);
 	}
 
 	/* package-private */ static String getTypeString(Class<?> clazz) {
 		return getTypeString(clazz.getName());
 	}
 
-	private static String getTypeString(String className) {
+	/* package-private */ static String getTypeString(String className) {
 		return className.replace(".", "/");
 	}
 
@@ -334,6 +333,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 	}
 
 	private void loadCurrentClass() {
+
+		String currentClassType = osgiClassLoaderVisitor.getCurrentClassType();
 
 		if (visitingStaticMethod) {
 

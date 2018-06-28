@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,26 +24,35 @@ import org.objectweb.asm.Opcodes;
 /* package-private */ final class JSF_OSGiClassVisitor extends ClassVisitor {
 
 	// Private Final Data Members
-	private final String currentClassName;
+	private final ClassLoader bundleWiringClassLoader;
+	private final String currentClassType;
 
 	// Private Data Members
 	private boolean classModified;
 
-	/* package-private */ JSF_OSGiClassVisitor(ClassVisitor cv, String className) {
+	/* package-private */ JSF_OSGiClassVisitor(OSGiClassWriter osgiClassWriter, String className) {
 
-		super(Opcodes.ASM5, cv);
-		this.currentClassName = className;
+		super(Opcodes.ASM5, osgiClassWriter);
+		this.bundleWiringClassLoader = osgiClassWriter.getBundleWiringClassLoader();
+		this.currentClassType = JSF_OSGiMethodVisitor.getTypeString(className);
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 
-		return new JSF_OSGiMethodVisitor(this, super.visitMethod(access, name, desc, signature, exceptions), access,
-				name, desc);
+		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+
+		// Since OSGiClassLoaderUtil relies on FacesContext.getInstance(), avoid calling OSGiClassLoaderUtil in
+		// FacesContext initialization to avoid circular calls.
+		if (!isFacesContextInit(name)) {
+			methodVisitor = new JSF_OSGiMethodVisitor(this, methodVisitor, access, name, desc);
+		}
+
+		return methodVisitor;
 	}
 
-	/* package-private */ String getCurrentClassName() {
-		return currentClassName;
+	/* package-private */ String getCurrentClassType() {
+		return currentClassType;
 	}
 
 	/* package-private */ boolean isClassModified() {
@@ -52,5 +61,28 @@ import org.objectweb.asm.Opcodes;
 
 	/* package-private */ void setClassModified(boolean classModified) {
 		this.classModified = classModified;
+	}
+
+	private boolean isFacesContextInit(String methodName) {
+
+		boolean isFacesContextInit = false;
+
+		if ("<clinit>".equals(methodName) || "<init>".equals(methodName)) {
+
+			IterableLazyTypeHierarchy iterableLazyTypeHierarchy = new IterableLazyTypeHierarchy(currentClassType,
+					bundleWiringClassLoader);
+
+			for (String type : iterableLazyTypeHierarchy) {
+
+				if (JSF_OSGiMethodVisitor.FACES_CONTEXT_TYPE_STRING.equals(type)) {
+
+					isFacesContextInit = true;
+
+					break;
+				}
+			}
+		}
+
+		return isFacesContextInit;
 	}
 }
