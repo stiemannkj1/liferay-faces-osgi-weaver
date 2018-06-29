@@ -185,6 +185,10 @@
 								!com.liferay.osgi.weaver,\
 								!com.liferay.osgi.weaver.*,\
 								*
+							# Ensure that ServiceLoader is supported (for the sake of Faces bundles) before this bundle
+							# is deployed.
+							Require-Capability: \
+								osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"
 						]]>
 					</bnd>
 				</configuration>
