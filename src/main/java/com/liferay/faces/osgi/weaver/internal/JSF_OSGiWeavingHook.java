@@ -97,6 +97,10 @@ import org.osgi.service.log.LogService;
 		return className.startsWith("com.liferay.faces.util.osgi");
 	}
 
+	private static boolean isLiferayFacesOSGiClassDependency(String className) {
+		return className.startsWith("com.liferay.faces.util.logging");
+	}
+
 	private static boolean isMojarraSPIClass(String className) {
 		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config.configprovider");
 	}
@@ -107,9 +111,10 @@ import org.osgi.service.log.LogService;
 		String className = wovenClass.getClassName();
 		BundleWiring bundleWiring = wovenClass.getBundleWiring();
 
-		// Don't weave Liferay Faces OSGi classes becuase they are already designed to be used in an OSGi environement
-		// with OSGi's limited class loaders.
-		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClass(className) && isHandledBundle(bundleWiring)) {
+		// Don't weave Liferay Faces OSGi classes (or the classes that they depend on) becuase they are already designed
+		// to be used in an OSGi environement with OSGi's limited class loaders.
+		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClassDependency(className) &&
+				!isLiferayFacesOSGiClass(className) && isHandledBundle(bundleWiring)) {
 
 			byte[] bytes = wovenClass.getBytes();
 
