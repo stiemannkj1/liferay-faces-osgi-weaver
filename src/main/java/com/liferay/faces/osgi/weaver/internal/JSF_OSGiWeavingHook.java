@@ -117,7 +117,11 @@ import org.osgi.service.log.LogService;
 
 			byte[] bytes = wovenClass.getBytes();
 
-			// ASM cannot handle classes compiled with Java 1.5 or lower.
+			// ASM cannot handle classes compiled with Java 1.5 or lower without using JSRInlinerAdapter (TODO use
+			// JSRInlinerAdapter to support classes compiled with target 1.5 and below in the future). For more
+			// information, see: https://stackoverflow.com/questions/37013761/status-of-jsr-ret-in-jvm-spec,
+			// https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.10.2.5, and
+			// https://asm.ow2.io/javadoc/org/objectweb/asm/commons/JSRInlinerAdapter.html.
 			if (isCompiledWithJava_1_6_OrGreater(bytes)) {
 
 				ClassReader classReader = new ClassReader(bytes);
@@ -145,6 +149,15 @@ import org.osgi.service.log.LogService;
 					logService.log(LogService.LOG_DEBUG,
 						"Unable to weave " + className + " due to the following error(s):", e);
 				}
+			}
+			else {
+
+				logService.log(LogService.LOG_WARNING,
+					"Unable to weave " + className +
+					" for use with OSGi. Unexpected class loading errors may occur when using this class.");
+				logService.log(LogService.LOG_DEBUG,
+					"Unable to weave " + className +
+					" since it is not compiled with Java (target) 1.6+. Classes compiled for Java 1.5 and below may contain jsr and ret bytecode instructions which cannot be handled by this bytecode weaver.");
 			}
 		}
 	}
