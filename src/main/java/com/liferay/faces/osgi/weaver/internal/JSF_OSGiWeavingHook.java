@@ -46,9 +46,8 @@ import org.osgi.service.log.LogService;
 	 * https://blogs.oracle.com/darcy/source%2c-target%2c-class-file-version-decoder-ring</a>
 	 */
 	private static final short JAVA_1_6_MAJOR_VERSION = 50;
-	private static final String OSGI_CLASS_LOADER_PACKAGE_NAME = "com.liferay.faces.util.osgi";
-	private static final String OSGI_CLASS_LOADER_DYNAMIC_IMPORT = OSGI_CLASS_LOADER_PACKAGE_NAME +
-		";bundle-symbolic-name=" + JSF_OSGiWeaver.LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME;
+	private static final String OSGI_CLASS_LOADER_DYNAMIC_IMPORT =
+		"com.liferay.faces.util.osgi;version=\"[1.0.0,2.0.0)\"";
 
 	// Private Data Members
 	private LogService logService;

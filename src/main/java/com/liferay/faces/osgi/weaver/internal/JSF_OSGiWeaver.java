@@ -47,11 +47,10 @@ public final class JSF_OSGiWeaver {
 
 	//J-
 	// Package-Private Constants
-	/* package-private */ static final String LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME = "com.liferay.faces.util";
 	/* package-private */ static final List<String> HANDLED_BUNDLE_SYMBOLIC_NAMES =
 	Collections.unmodifiableList(Arrays.asList(
 		"org.glassfish.javax.faces",
-		LIFERAY_FACES_UTIL_BUNDLE_SYMBOLIC_NAME,
+		"com.liferay.faces.util",
 		"com.liferay.faces.bridge.impl",
 		"org.primefaces"
 	));
