@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.Iterator;
 import java.util.List;
 
 import org.osgi.framework.Bundle;
@@ -77,20 +78,6 @@ public final class JSF_OSGiWeaver {
 		return webContextPathHeader != null;
 	}
 
-	private static void restartFacesWabs(List<Bundle> facesWabs, LogService logService) {
-
-		for (Bundle facesWab : facesWabs) {
-
-			try {
-				facesWab.start();
-			}
-			catch (BundleException e) {
-				logService.log(LogService.LOG_ERROR,
-					facesWab.getSymbolicName() + " failed to start due to the following error(s):", e);
-			}
-		}
-	}
-
 	@Activate
 	/* package-private */ synchronized void activate(BundleContext bundleContext) throws BundleException {
 
@@ -115,22 +102,28 @@ public final class JSF_OSGiWeaver {
 				facesBundles.add(bundle);
 			}
 			else if (isFacesWab(bundle)) {
-
-				int facesWabState = bundle.getState();
-
-				if ((facesWabState == Bundle.STARTING) || (facesWabState == Bundle.ACTIVE)) {
-
-					bundle.stop();
-					facesWabs.add(bundle);
-				}
+				facesWabs.add(bundle);
 			}
 		}
 
 		if (!facesBundles.isEmpty()) {
+
+			Iterator<Bundle> iterator = facesWabs.iterator();
+
+			while (iterator.hasNext()) {
+
+				Bundle bundle = iterator.next();
+				int facesWabState = bundle.getState();
+
+				if ((facesWabState == Bundle.STARTING) || (facesWabState == Bundle.ACTIVE)) {
+					bundle.stop();
+				}
+				else {
+					iterator.remove();
+				}
+			}
+
 			frameworkWiring.refreshBundles(facesBundles, new FacesBundlesRefreshListener(facesWabs, logService));
-		}
-		else if (!facesWabs.isEmpty()) {
-			restartFacesWabs(Collections.unmodifiableList(facesWabs), logService);
 		}
 	}
 
@@ -157,7 +150,17 @@ public final class JSF_OSGiWeaver {
 			int eventType = frameworkEvent.getType();
 
 			if (eventType == FrameworkEvent.PACKAGES_REFRESHED) {
-				restartFacesWabs(facesWabs, logService);
+
+				for (Bundle facesWab : facesWabs) {
+
+					try {
+						facesWab.start();
+					}
+					catch (BundleException e) {
+						logService.log(LogService.LOG_ERROR,
+							facesWab.getSymbolicName() + " failed to start due to the following error(s):", e);
+					}
+				}
 			}
 		}
 	}
