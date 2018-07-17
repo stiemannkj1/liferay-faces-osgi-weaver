@@ -78,8 +78,9 @@ import org.osgi.service.log.LogService;
 		// Byte Offset: 00 01 02 03 04 05 06 07
 		// Bytes:		CA FE BA BE 00 00 00 33
 		//J+
-		ByteBuffer buffer = ByteBuffer.wrap(classBytes, CLASS_MAJOR_VERSION_BYTE_OFFSET, CLASS_MAJOR_VERSION_BYTE_SIZE);
-		short majorVersion = buffer.getShort();
+		ByteBuffer byteBuffer = ByteBuffer.wrap(classBytes, CLASS_MAJOR_VERSION_BYTE_OFFSET,
+				CLASS_MAJOR_VERSION_BYTE_SIZE);
+		short majorVersion = byteBuffer.getShort();
 
 		return majorVersion >= JAVA_1_6_MAJOR_VERSION;
 	}
