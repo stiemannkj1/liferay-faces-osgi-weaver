@@ -26,13 +26,15 @@ import org.objectweb.asm.Opcodes;
 	// Private Final Data Members
 	private final ClassLoader bundleWiringClassLoader;
 	private final String currentClassType;
+	private final boolean weaveClassLoadingCalls;
 
 	// Private Data Members
 	private boolean classModified;
 
-	/* package-private */ JSF_OSGiClassVisitor(OSGiClassWriter osgiClassWriter, String className) {
+	/* package-private */ JSF_OSGiClassVisitor(boolean weaveClassLoadingCalls, OSGiClassWriter osgiClassWriter, String className) {
 
 		super(Opcodes.ASM5, osgiClassWriter);
+		this.weaveClassLoadingCalls = weaveClassLoadingCalls;
 		this.bundleWiringClassLoader = osgiClassWriter.getBundleWiringClassLoader();
 		this.currentClassType = JSF_OSGiMethodVisitor.getTypeString(className);
 	}
@@ -57,6 +59,10 @@ import org.objectweb.asm.Opcodes;
 
 	/* package-private */ boolean isClassModified() {
 		return classModified;
+	}
+
+	/* package-private */ boolean isWeaveClassLoadingCalls() {
+		return weaveClassLoadingCalls;
 	}
 
 	/* package-private */ void setClassModified(boolean classModified) {

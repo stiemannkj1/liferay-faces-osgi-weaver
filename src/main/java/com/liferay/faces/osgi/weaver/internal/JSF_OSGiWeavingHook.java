@@ -20,6 +20,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.Version;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.wiring.BundleWiring;
@@ -39,6 +40,8 @@ import org.osgi.service.log.LogService;
 	// Private Constants
 	private static final int CLASS_MAJOR_VERSION_BYTE_OFFSET = 6;
 	private static final int CLASS_MAJOR_VERSION_BYTE_SIZE = 2;
+	private static final String MOJARRA_BUNDLE_SYMBOLIC_NAME = "org.glassfish.javax.faces";
+	private static final String PRIMEFACES_BUNDLE_SYMBOLIC_NAME = "org.primefaces";
 
 	/**
 	 * For more details on Java class format/target versions see here: <a
@@ -54,6 +57,13 @@ import org.osgi.service.log.LogService;
 
 	public JSF_OSGiWeavingHook(LogService logService) {
 		this.logService = logService;
+	}
+
+	/* package-private */ static boolean isWeaveBundle(Bundle bundle) {
+
+		String bundleSymbolicName = bundle.getSymbolicName();
+
+		return MOJARRA_BUNDLE_SYMBOLIC_NAME.equals(bundleSymbolicName) || isPrimeFaces_6_2_OrLower(bundle);
 	}
 
 	/**
@@ -85,24 +95,23 @@ import org.osgi.service.log.LogService;
 		return majorVersion >= JAVA_1_6_MAJOR_VERSION;
 	}
 
-	private static boolean isHandledBundle(BundleWiring bundleWiring) {
-
-		Bundle bundle = bundleWiring.getBundle();
-		String bundleSymbolicName = bundle.getSymbolicName();
-
-		return JSF_OSGiWeaver.HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName);
-	}
-
-	private static boolean isLiferayFacesOSGiClass(String className) {
-		return className.startsWith("com.liferay.faces.util.osgi");
-	}
-
-	private static boolean isLiferayFacesOSGiClassDependency(String className) {
-		return className.startsWith("com.liferay.faces.util.logging");
-	}
-
 	private static boolean isMojarraSPIClass(String className) {
 		return className.startsWith("com.sun.faces.spi") || className.startsWith("com.sun.faces.config.configprovider");
+	}
+
+	private static boolean isPrimeFaces_6_2_OrLower(Bundle bundle) {
+
+		boolean primeFaces_6_2_OrLower = false;
+		String bundleSymbolicName = bundle.getSymbolicName();
+
+		if (PRIMEFACES_BUNDLE_SYMBOLIC_NAME.equals(bundleSymbolicName)) {
+
+			Version version = bundle.getVersion();
+			primeFaces_6_2_OrLower = ((version.getMajor() == 6) && (version.getMinor() <= 2)) ||
+				(version.getMajor() < 6);
+		}
+
+		return primeFaces_6_2_OrLower;
 	}
 
 	@Override
@@ -110,11 +119,9 @@ import org.osgi.service.log.LogService;
 
 		String className = wovenClass.getClassName();
 		BundleWiring bundleWiring = wovenClass.getBundleWiring();
+		Bundle bundle = bundleWiring.getBundle();
 
-		// Don't weave Liferay Faces OSGi classes (or the classes that they depend on) becuase they are already designed
-		// to be used in an OSGi environement with OSGi's limited class loaders.
-		if (!isMojarraSPIClass(className) && !isLiferayFacesOSGiClassDependency(className) &&
-				!isLiferayFacesOSGiClass(className) && isHandledBundle(bundleWiring)) {
+		if (!isMojarraSPIClass(className) && isWeaveBundle(bundle)) {
 
 			byte[] bytes = wovenClass.getBytes();
 
@@ -131,7 +138,8 @@ import org.osgi.service.log.LogService;
 
 				try {
 
-					JSF_OSGiClassVisitor jsfOSGiClassVisitor = new JSF_OSGiClassVisitor(osgiClassWriter, className);
+					JSF_OSGiClassVisitor jsfOSGiClassVisitor = new JSF_OSGiClassVisitor(!isPrimeFaces_6_2_OrLower(
+								bundle), osgiClassWriter, className);
 					classReader.accept(jsfOSGiClassVisitor, ClassReader.SKIP_FRAMES);
 
 					if (jsfOSGiClassVisitor.isClassModified()) {

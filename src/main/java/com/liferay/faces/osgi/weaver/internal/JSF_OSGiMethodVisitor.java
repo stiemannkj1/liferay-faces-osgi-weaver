@@ -113,8 +113,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String methodDescriptor, boolean itf) {
 
-		if ((opcode == Opcodes.INVOKEVIRTUAL) && owner.equals(CLASS_LOADER_OWNER_STRING) && name.equals("loadClass") &&
-				methodDescriptor.equals(LOAD_CLASS_METHOD_DESCRIPTOR)) {
+		boolean weaveClassLoadingCalls = osgiClassLoaderVisitor.isWeaveClassLoadingCalls();
+
+		if (weaveClassLoadingCalls && (opcode == Opcodes.INVOKEVIRTUAL) && owner.equals(CLASS_LOADER_OWNER_STRING) &&
+				name.equals("loadClass") && methodDescriptor.equals(LOAD_CLASS_METHOD_DESCRIPTOR)) {
 
 			// The stack has been prepared so that classLoader.loadClass(className) can be called next:
 
@@ -169,7 +171,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 				REPLACEMENT_LOAD_CLASS_METHOD_DESCRIPTOR, false);
 			osgiClassLoaderVisitor.setClassModified(true);
 		}
-		else if ((opcode == Opcodes.INVOKESTATIC) && owner.equals(CLASS_OWNER_STRING) && name.equals("forName") &&
+		else if (weaveClassLoadingCalls && (opcode == Opcodes.INVOKESTATIC) && owner.equals(CLASS_OWNER_STRING) &&
+				name.equals("forName") &&
 				(methodDescriptor.equals(CLASS_FOR_NAME_1_ARG_METHOD_DESCRIPTOR) ||
 					methodDescriptor.equals(CLASS_FOR_NAME_3_ARG_METHOD_DESCRIPTOR))) {
 
@@ -239,8 +242,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 				osgiClassLoaderMethodDescriptor, false);
 			osgiClassLoaderVisitor.setClassModified(true);
 		}
-		else if ((opcode == Opcodes.INVOKEVIRTUAL) && owner.equals(CLASS_LOADER_OWNER_STRING) &&
-				name.startsWith("getResource")) {
+		else if (weaveClassLoadingCalls && (opcode == Opcodes.INVOKEVIRTUAL) &&
+				owner.equals(CLASS_LOADER_OWNER_STRING) && name.startsWith("getResource")) {
 
 			// The stack has been prepared so that classLoader.getResource*(name) can be called next:
 

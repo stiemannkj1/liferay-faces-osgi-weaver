@@ -14,7 +14,6 @@
 package com.liferay.faces.osgi.weaver.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Iterator;
@@ -45,17 +44,6 @@ import org.osgi.service.log.LogService;
  */
 @Component(immediate = true)
 public final class JSF_OSGiWeaver {
-
-	//J-
-	// Package-Private Constants
-	/* package-private */ static final List<String> HANDLED_BUNDLE_SYMBOLIC_NAMES =
-	Collections.unmodifiableList(Arrays.asList(
-		"org.glassfish.javax.faces",
-		"com.liferay.faces.util",
-		"com.liferay.faces.bridge.impl",
-		"org.primefaces"
-	));
-	//J+
 
 	// Private Data Members
 	@Reference
@@ -96,9 +84,7 @@ public final class JSF_OSGiWeaver {
 
 		for (Bundle bundle : bundles) {
 
-			String bundleSymbolicName = bundle.getSymbolicName();
-
-			if (HANDLED_BUNDLE_SYMBOLIC_NAMES.contains(bundleSymbolicName)) {
+			if (JSF_OSGiWeavingHook.isWeaveBundle(bundle)) {
 				facesBundles.add(bundle);
 			}
 			else if (isFacesWab(bundle)) {
