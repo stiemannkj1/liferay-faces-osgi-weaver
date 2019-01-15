@@ -151,19 +151,11 @@ import org.osgi.service.log.LogService;
 					}
 				}
 				catch (CommonSuperClassNotFoundException e) {
-
-					logService.log(LogService.LOG_WARNING,
-						"Unable to weave " + className +
-						" for use with OSGi. Unexpected class loading errors may occur when using this class.");
 					logService.log(LogService.LOG_DEBUG,
 						"Unable to weave " + className + " due to the following error(s):", e);
 				}
 			}
 			else {
-
-				logService.log(LogService.LOG_WARNING,
-					"Unable to weave " + className +
-					" for use with OSGi. Unexpected class loading errors may occur when using this class.");
 				logService.log(LogService.LOG_DEBUG,
 					"Unable to weave " + className +
 					" since it is not compiled with Java (target) 1.6+. Classes compiled for Java 1.5 and below may contain jsr and ret bytecode instructions which cannot be handled by this bytecode weaver.");
