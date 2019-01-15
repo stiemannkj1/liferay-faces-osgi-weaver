@@ -52,6 +52,7 @@
 	</developers>
 
 	<properties>
+		<asm.version>7.0</asm.version>
 		<bnd.version>3.5.0</bnd.version>
 		<faces.api.version>${faces.spec.version}</faces.api.version>
 		<faces.spec.version>2.2</faces.spec.version>
@@ -269,8 +270,20 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
-			<artifactId>asm-all</artifactId>
-			<version>5.2</version>
+			<artifactId>asm-commons</artifactId>
+			<version>${asm.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-util</artifactId>
+			<version>${asm.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>${asm.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
